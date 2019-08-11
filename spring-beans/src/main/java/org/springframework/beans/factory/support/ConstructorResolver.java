@@ -120,14 +120,22 @@ class ConstructorResolver {
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
 
+		// 构造方法
 		Constructor<?> constructorToUse = null;
+		// 构造参数
 		ArgumentsHolder argsHolderToUse = null;
+		// 构造参数
 		Object[] argsToUse = null;
 
+		// 接下来就是找到构造方法 构造参数
+
 		if (explicitArgs != null) {
+			// 如果传递了构造参数就直接拿来用
 			argsToUse = explicitArgs;
 		}
 		else {
+
+			// 尽可能的找到构造参数
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
@@ -146,6 +154,8 @@ class ConstructorResolver {
 
 		if (constructorToUse == null || argsToUse == null) {
 			// Take specified constructors, if any.
+			// 没有找到构造方法或者没有构造参数
+			// 就用反射找出所有的构造方法
 			Constructor<?>[] candidates = chosenCtors;
 			if (candidates == null) {
 				Class<?> beanClass = mbd.getBeanClass();
@@ -160,6 +170,7 @@ class ConstructorResolver {
 				}
 			}
 
+			// 尝试使用无参构造方法创建bean
 			if (candidates.length == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Constructor<?> uniqueCandidate = candidates[0];
 				if (uniqueCandidate.getParameterCount() == 0) {
@@ -173,6 +184,7 @@ class ConstructorResolver {
 				}
 			}
 
+			// 接下来就是从所有的构造方法中选择一个作为构造方法
 			// Need to resolve the constructor.
 			boolean autowiring = (chosenCtors != null ||
 					mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
@@ -385,6 +397,7 @@ class ConstructorResolver {
 
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
+			// 实例工厂
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"factory-bean reference points back to the same bean definition");
@@ -397,6 +410,7 @@ class ConstructorResolver {
 			isStatic = false;
 		}
 		else {
+			// 静态工厂
 			// It's a static factory method on the bean class.
 			if (!mbd.hasBeanClass()) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
@@ -411,12 +425,16 @@ class ConstructorResolver {
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
 
+		// 如果指定了构造参数则直接使用
+		// 在调用 getBean 方法的时候指定了方法参数
 		if (explicitArgs != null) {
 			argsToUse = explicitArgs;
 		}
 		else {
+			// 调用 getBean方法的时候没有指定方法参数   就噼里啪啦的给他造一堆参数
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
+				// 从构造函数和工厂方法中获取
 				factoryMethodToUse = (Method) mbd.resolvedConstructorOrFactoryMethod;
 				if (factoryMethodToUse != null && mbd.constructorArgumentsResolved) {
 					// Found a cached factory method...
@@ -426,16 +444,21 @@ class ConstructorResolver {
 					}
 				}
 			}
+			// 尽最大的可能整出一堆参数出来  当然这里可能还是没有参数
 			if (argsToResolve != null) {
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, factoryMethodToUse, argsToResolve, true);
 			}
 		}
 
 		if (factoryMethodToUse == null || argsToUse == null) {
+			// 没有工厂方法  或者没有参数
+			// 就用反射把工厂类的所有构造方法都撸出来 然后遍历一下  看看哪些可以用
 			// Need to determine the factory method...
 			// Try all methods with this name to see if they match the given arguments.
 			factoryClass = ClassUtils.getUserClass(factoryClass);
 
+
+			// 把静态构造方法装起来
 			Method[] rawCandidates = getCandidateMethods(factoryClass, mbd);
 			List<Method> candidateList = new ArrayList<>();
 			for (Method candidate : rawCandidates) {
@@ -444,6 +467,7 @@ class ConstructorResolver {
 				}
 			}
 
+			// 尝试使用无参构造创建bean
 			if (candidateList.size() == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
 				Method uniqueCandidate = candidateList.get(0);
 				if (uniqueCandidate.getParameterCount() == 0) {
@@ -458,6 +482,10 @@ class ConstructorResolver {
 				}
 			}
 
+
+			// 剩下的反正就是要找出一个构造函数来创建bean
+
+			// 构造函数排序
 			Method[] candidates = candidateList.toArray(new Method[0]);
 			AutowireUtils.sortFactoryMethods(candidates);
 

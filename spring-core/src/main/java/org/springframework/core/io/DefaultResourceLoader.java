@@ -208,4 +208,10 @@ public class DefaultResourceLoader implements ResourceLoader {
 		}
 	}
 
+	public static void main(String[] args) {
+		DefaultResourceLoader resourceLoader = new DefaultResourceLoader();
+		Resource resource = resourceLoader.getResource("/Users/pan/Desktop/test.txt");
+		System.out.println(resource instanceof ClassPathContextResource);
+	}
+
 }

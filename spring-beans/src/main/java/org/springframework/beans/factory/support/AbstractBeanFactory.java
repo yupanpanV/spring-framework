@@ -150,10 +150,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/** BeanPostProcessors to apply in createBean. */
 	private final List<BeanPostProcessor> beanPostProcessors = new CopyOnWriteArrayList<>();
 
-	/** Indicates whether any InstantiationAwareBeanPostProcessors have been registered. */
+	/** Indicates whether any InstantiationAwareBeanPostProcessors have been registered.
+	 *  是否有 InstantiationAwareBeanPostProcessor 这种类型的后置处理器
+	 *  开启自动代理注解之后注入的  AnnotationAwareAspectJAutoProxyCreator 就是这种类型的
+	 */
 	private volatile boolean hasInstantiationAwareBeanPostProcessors;
 
-	/** Indicates whether any DestructionAwareBeanPostProcessors have been registered. */
+	/** Indicates whether any DestructionAwareBeanPostProcessors have been registered.
+	 *	是否有这种 DestructionAwareBeanPostProcessor 类型的后置处理器
+	 */
 	private volatile boolean hasDestructionAwareBeanPostProcessors;
 
 	/** Map from scope identifier String to corresponding Scope. */
@@ -260,7 +265,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
-			// 这里获取到的bean不一定是完整的  所以这里要装配一下
+			// 这里获取到的bean 可能是真正的bean也有可能是FactoryBean 要选一个
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 

@@ -33,6 +33,11 @@ import javax.servlet.ServletContextListener;
  * @since 17.02.2003
  * @see #setContextInitializers
  * @see org.springframework.web.WebApplicationInitializer
+ *
+ *
+ *
+ * 这是业务容器的持有者 其context属性引用业务容器
+ * 也就是springMVC容器的父容器  在服务器启动的时候创建 比如tomcat的 ServletContextListener创建
  */
 public class ContextLoaderListener extends ContextLoader implements ServletContextListener {
 
@@ -100,6 +105,8 @@ public class ContextLoaderListener extends ContextLoader implements ServletConte
 	 */
 	@Override
 	public void contextInitialized(ServletContextEvent event) {
+		// 根据tomcat传递过来的参数 初始化业务容器
+		// 实际上由父类ContextLoader实现
 		initWebApplicationContext(event.getServletContext());
 	}
 

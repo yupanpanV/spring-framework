@@ -79,6 +79,7 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 	 */
 	@Override
 	protected Set<String> getMappingPathPatterns(RequestMappingInfo info) {
+		// 获取RequestMappingInfo中的Patterns
 		return info.getPatternsCondition().getPatterns();
 	}
 

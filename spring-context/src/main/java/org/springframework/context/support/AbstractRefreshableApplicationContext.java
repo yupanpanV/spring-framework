@@ -64,9 +64,11 @@ import org.springframework.lang.Nullable;
  */
 public abstract class AbstractRefreshableApplicationContext extends AbstractApplicationContext {
 
+	/**是否允许BeanDefinition覆盖*/
 	@Nullable
 	private Boolean allowBeanDefinitionOverriding;
 
+	/**是否允许循环引用*/
 	@Nullable
 	private Boolean allowCircularReferences;
 
@@ -122,15 +124,27 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
+		// 创建BeanFactory 并对其进行一番初始化
+
+
+		// 如果已经存在BeanFactory就先销毁他 然后再创建一个新的
 		if (hasBeanFactory()) {
 			destroyBeans();
 			closeBeanFactory();
 		}
+
 		try {
+			// 创建BeanFactory
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
+			// 指定序列化编号
 			beanFactory.setSerializationId(getId());
+			// 定制 BeanFactory 设置相关属性
 			customizeBeanFactory(beanFactory);
+			// 加载 BeanDefinition 们
 			loadBeanDefinitions(beanFactory);
+			// 设置 Context 的 BeanFactory
+
+			// 引用BeanFactory    但是这里为何会存在并发问题？？？
 			synchronized (this.beanFactoryMonitor) {
 				this.beanFactory = beanFactory;
 			}

@@ -41,6 +41,8 @@ public class SimpleControllerHandlerAdapter implements HandlerAdapter {
 
 	@Override
 	public boolean supports(Object handler) {
+		// 判断handler是不受Controller类型
+		// 不是 @Controller 注解。
 		return (handler instanceof Controller);
 	}
 
@@ -48,7 +50,7 @@ public class SimpleControllerHandlerAdapter implements HandlerAdapter {
 	@Nullable
 	public ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-
+		// 使用Controller处理请求
 		return ((Controller) handler).handleRequest(request, response);
 	}
 

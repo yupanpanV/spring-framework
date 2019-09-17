@@ -64,6 +64,7 @@ public class HandlerMethod {
 	/** Logger that is available to subclasses. */
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	/** 持有这个Method的Bean */
 	private final Object bean;
 
 	@Nullable
@@ -322,6 +323,7 @@ public class HandlerMethod {
 			String beanName = (String) this.bean;
 			handler = this.beanFactory.getBean(beanName);
 		}
+		// 为什么要绕一圈？？？
 		return new HandlerMethod(this, handler);
 	}
 

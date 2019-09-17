@@ -588,6 +588,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// 属性填充
 			populateBean(beanName, mbd, instanceWrapper);
 			// 实例化bean
+			// 调用 BeanNameAware、BeanClassLoaderAware、BeanFactoryAware 的aware方法
+			// 调用 Bean后置处理器的  before方法
+			// 调用用户自定义的 init 方法
+			//      InitializingBean 和 自定义的初始化方法 都尝试调用
+			// 调用 Bean后置处理器的  after方法
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -1076,8 +1081,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 				Class<?> targetType = determineTargetType(beanName, mbd);
 				if (targetType != null) {
+					// 挨个调用所有 InstantiationAwareBeanPostProcessor bean后置处理器的 postProcessBeforeInstantiation 方法
+					// 一但有对象返回就不继续调用了
 					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
 					if (bean != null) {
+						// 挨个后置处理
 						bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
 					}
 				}
@@ -1827,6 +1835,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected void invokeInitMethods(String beanName, final Object bean, @Nullable RootBeanDefinition mbd)
 			throws Throwable {
 
+		// 如果该对象实现了 InitializingBean 接口就调用afterPropertiesSet
 		boolean isInitializingBean = (bean instanceof InitializingBean);
 		if (isInitializingBean && (mbd == null || !mbd.isExternallyManagedInitMethod("afterPropertiesSet"))) {
 			if (logger.isTraceEnabled()) {
@@ -1848,6 +1857,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
+		// 如果自定义了初始化方法 就调用
 		if (mbd != null && bean.getClass() != NullBean.class) {
 			String initMethodName = mbd.getInitMethodName();
 			if (StringUtils.hasLength(initMethodName) &&

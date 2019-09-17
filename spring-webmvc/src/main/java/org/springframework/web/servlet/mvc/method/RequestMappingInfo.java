@@ -57,18 +57,19 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	@Nullable
 	private final String name;
 
+	/**请求路径的条件*/
 	private final PatternsRequestCondition patternsCondition;
-
+	/**请求方法的条件*/
 	private final RequestMethodsRequestCondition methodsCondition;
-
+	/**参数的条件*/
 	private final ParamsRequestCondition paramsCondition;
-
+	/**请求头的条件*/
 	private final HeadersRequestCondition headersCondition;
-
+	/**可消费的 Content-Type 的条件*/
 	private final ConsumesRequestCondition consumesCondition;
-
+	/**可消费的 Content-Type 的条件*/
 	private final ProducesRequestCondition producesCondition;
-
+	/**自定义条件*/
 	private final RequestConditionHolder customConditionHolder;
 
 

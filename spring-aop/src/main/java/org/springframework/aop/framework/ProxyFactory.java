@@ -39,6 +39,8 @@ public class ProxyFactory extends ProxyCreatorSupport {
 	 * Create a new ProxyFactory.
 	 */
 	public ProxyFactory() {
+		// 组合模式
+		// 默认的代理工厂为 DefaultAopProxyFactory
 	}
 
 	/**
@@ -107,6 +109,7 @@ public class ProxyFactory extends ProxyCreatorSupport {
 	 * @return the proxy object
 	 */
 	public Object getProxy(@Nullable ClassLoader classLoader) {
+		// createAopProxy() 创建JDK动态代理 或者Cglib 动态代理
 		return createAopProxy().getProxy(classLoader);
 	}
 

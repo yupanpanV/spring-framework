@@ -356,8 +356,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		// Create proxy if we have advice.
 		// 如果存在增强方法就创建代理
 		// 获取该类的所有增强方法
+		// 该方法内部会找到BeanFactory中所有的切面Aspect 然后创建所有的 advise
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
+			// 换车这个KEY
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
 			// 创建代理
 			Object proxy = createProxy(
@@ -366,6 +368,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			return proxy;
 		}
 
+		// 没有创建代理成功  就把它标记为无需增强
 		this.advisedBeans.put(cacheKey, Boolean.FALSE);
 		return bean;
 	}
@@ -456,31 +459,58 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			@Nullable Object[] specificInterceptors, TargetSource targetSource) {
 
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
+			// 给 BeanDefinition 增加一个属性
+			// 属性名 org.springframework.aop.framework.autoproxy.AutoProxyUtils.originalTargetClass
+			// 属性值 {beanClass}
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}
 
+		// 创建代理工厂
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.copyFrom(this);
 
+
+		// 如果 EnableAspectJAutoProxy注解的属性 proxyTargetClass 为false
+		// 默认为 false   也就是说默认会走下面的分支
 		if (!proxyFactory.isProxyTargetClass()) {
+
+			// org.springframework.aop.framework.autoproxy.AutoProxyUtils.preserveTargetClass
+			// 如果 beanClass 的BeanDefinition的属性为true
+			// 则使用Cglib作为动态代理
 			if (shouldProxyTargetClass(beanClass, beanName)) {
+				// 把proxyTargetClass属性标记为true
+				// 表示使用cglib做为动态代理
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
+
+				// 这里使用JDK动态代理
+
+				// 找到这个beanClass的接口 并把它赋给 代理工厂
+				// 如果发现不适合使用JDK动态代理 就把它标记为使用Cglib动态代理
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
 
+		// 编译拦截器们
+		// 1.添加通用拦截器 如果有的话
+		// 2.检查拦截器 并把它包装成 Advisor  不通过将会抛异常
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);
+
+		// 自定义代理工厂 默认空实现 由程序猿自己来扩展
 		customizeProxyFactory(proxyFactory);
 
 		proxyFactory.setFrozen(this.freezeProxy);
+
+
+		// 是否预过滤   默认为true
 		if (advisorsPreFiltered()) {
 			proxyFactory.setPreFiltered(true);
 		}
 
+		// 代理工厂创建代理对象
 		return proxyFactory.getProxy(getProxyClassLoader());
 	}
 
@@ -524,14 +554,20 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		// Handle prototypes correctly...
 		Advisor[] commonInterceptors = resolveInterceptorNames();
 
+		// 把增强数组 转成list
 		List<Object> allInterceptors = new ArrayList<>();
 		if (specificInterceptors != null) {
 			allInterceptors.addAll(Arrays.asList(specificInterceptors));
+
+			// 如果存在共同的增强 就把它添加进来
 			if (commonInterceptors.length > 0) {
+
+				// 如果共同的增强的优先级高就把它放在前面
 				if (this.applyCommonInterceptorsFirst) {
 					allInterceptors.addAll(0, Arrays.asList(commonInterceptors));
 				}
 				else {
+					// 否则放在后面
 					allInterceptors.addAll(Arrays.asList(commonInterceptors));
 				}
 			}
@@ -543,8 +579,15 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 					" common interceptors and " + nrOfSpecificInterceptors + " specific interceptors");
 		}
 
+		// 把这些拦截器包装成增强然后返回
 		Advisor[] advisors = new Advisor[allInterceptors.size()];
 		for (int i = 0; i < allInterceptors.size(); i++) {
+			// 拦截器 可能是 Advisor, Advice    如果都不是将抛出异常
+			// 如果拦截器为 Advisor  直接返回
+			// 如果拦截器为 MethodInterceptor  则把它包装成 DefaultPointcutAdvisor
+			// 如果拦截器为 其他种类的 Advice 则需要经过
+			// MethodBeforeAdviceAdapter, AfterReturningAdviceAdapter,ThrowsAdviceAdapter
+			// 的适配检查  不通过将会抛出异常
 			advisors[i] = this.advisorAdapterRegistry.wrap(allInterceptors.get(i));
 		}
 		return advisors;
@@ -558,6 +601,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		BeanFactory bf = this.beanFactory;
 		ConfigurableBeanFactory cbf = (bf instanceof ConfigurableBeanFactory ? (ConfigurableBeanFactory) bf : null);
 		List<Advisor> advisors = new ArrayList<>();
+
+		// 遍历拦截器
 		for (String beanName : this.interceptorNames) {
 			if (cbf == null || !cbf.isCurrentlyInCreation(beanName)) {
 				Assert.state(bf != null, "BeanFactory required for resolving interceptor names");

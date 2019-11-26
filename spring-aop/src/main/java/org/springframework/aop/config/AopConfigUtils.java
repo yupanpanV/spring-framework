@@ -120,6 +120,10 @@ public abstract class AopConfigUtils {
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 
+		// cls 为这个类对象  AnnotationAwareAspectJAutoProxyCreator
+
+		// 如果容器中已经包含了 org.springframework.aop.config.internalAutoProxyCreator 这个bean
+		// 简单处理一下就返回
 		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
 			BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
 			if (!cls.getName().equals(apcDefinition.getBeanClassName())) {
@@ -132,6 +136,7 @@ public abstract class AopConfigUtils {
 			return null;
 		}
 
+		// 生成 beanDefinition 然后往容器中注册
 		RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
 		beanDefinition.setSource(source);
 		beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);

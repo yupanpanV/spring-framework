@@ -40,6 +40,8 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 
 	public AbstractHandlerMethodAdapter() {
 		// no restriction of HTTP methods by default
+		// 调用 WebContentGenerator 类的构造方法
+		// 参数 restrictDefaultSupportedMethods 参数为 false ，表示不需要严格校验 HttpMethod
 		super(false);
 	}
 
@@ -83,7 +85,7 @@ public abstract class AbstractHandlerMethodAdapter extends WebContentGenerator i
 	@Nullable
 	public final ModelAndView handle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-
+		// 交给子类处理
 		return handleInternal(request, response, (HandlerMethod) handler);
 	}
 

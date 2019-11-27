@@ -130,8 +130,11 @@ public class ContextLoader {
 	 * that defines ContextLoader's default strategy names.
 	 */
 	private static final String DEFAULT_STRATEGIES_PATH = "ContextLoader.properties";
-
-
+	/**
+	 * 默认的配置 Properties 对象
+	 *
+	 * 从 {@link #DEFAULT_STRATEGIES_PATH} 中读取
+	 */
 	private static final Properties defaultStrategies;
 
 	static {
@@ -289,6 +292,8 @@ public class ContextLoader {
 			// 如果业务容器是ConfigurableWebApplicationContext类型的就要配置并刷新
 			if (this.context instanceof ConfigurableWebApplicationContext) {
 				ConfigurableWebApplicationContext cwac = (ConfigurableWebApplicationContext) this.context;
+
+				// 容器必须是未激活的 才会配置刷新
 				if (!cwac.isActive()) {
 					// The context has not yet been refreshed -> provide services such as
 					// setting the parent context, setting the application context id, etc
@@ -308,6 +313,7 @@ public class ContextLoader {
 			// servletContext保存ApplicationContext的引用
 			servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, this.context);
 
+			// 记录到 currentContext 或 currentContextPerThread 中
 			ClassLoader ccl = Thread.currentThread().getContextClassLoader();
 			if (ccl == ContextLoader.class.getClassLoader()) {
 				currentContext = this.context;
@@ -346,6 +352,7 @@ public class ContextLoader {
 		// 判断创建什么类型的容器，默认类型为 XmlWebApplicationContext
 		Class<?> contextClass = determineContextClass(sc);
 
+		// 判断 context 的类，是否符合 ConfigurableWebApplicationContext 的类型
 		if (!ConfigurableWebApplicationContext.class.isAssignableFrom(contextClass)) {
 			throw new ApplicationContextException("Custom context class [" + contextClass.getName() +
 					"] is not of type [" + ConfigurableWebApplicationContext.class.getName() + "]");
@@ -401,6 +408,7 @@ public class ContextLoader {
 	}
 
 	protected void configureAndRefreshWebApplicationContext(ConfigurableWebApplicationContext wac, ServletContext sc) {
+		// 如果 spring容器 使用了默认编号，则重新设置 id 属性
 		if (ObjectUtils.identityToString(wac).equals(wac.getId())) {
 			// The application context id is still set to its original default value
 			// -> assign a more useful id based on available information
@@ -410,6 +418,7 @@ public class ContextLoader {
 				// 设置容器 id
 				wac.setId(idParam);
 			}
+			// 自动生成
 			else {
 				// Generate default id...
 				// 用户未配置 contextId，则设置一个默认的容器 id
@@ -418,6 +427,7 @@ public class ContextLoader {
 			}
 		}
 
+		// 容器保存一下 ServletContext
 		wac.setServletContext(sc);
 
 		// 获取 contextConfigLocation 配置
@@ -434,6 +444,7 @@ public class ContextLoader {
 			((ConfigurableWebEnvironment) env).initPropertySources(sc, null);
 		}
 
+		// 自定义容器
 		customizeContext(sc, wac);
 
 

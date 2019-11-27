@@ -91,9 +91,16 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 
 	private boolean detectHandlerMethodsInAncestorContexts = false;
 
+	/**
+	 * Mapping 命名策略
+	 * 它的作用是  生成一个唯一的名字  然后按照 名字->handler 缓存起来
+	 * 这样就不用每次请求都要去查询一遍
+	 */
 	@Nullable
 	private HandlerMethodMappingNamingStrategy<T> namingStrategy;
-
+	/**
+	 * Mapping 注册表
+	 */
 	private final MappingRegistry mappingRegistry = new MappingRegistry();
 
 
@@ -252,6 +259,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				logger.trace("Could not resolve type for bean '" + beanName + "'", ex);
 			}
 		}
+		// 如果这个bean 有Controller 注解 或者 RequestMapping 注解
 		if (beanType != null && isHandler(beanType)) {
 			//扫描处理器方法们
 			detectHandlerMethods(beanName);
@@ -265,6 +273,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	protected void detectHandlerMethods(Object handler) {
 
+		// handler 为beanName
+
 		// 获取处理器的类型
 		Class<?> handlerType = (handler instanceof String ?
 				obtainApplicationContext().getType((String) handler) : handler.getClass());
@@ -273,7 +283,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 			// 获取真实类   因为有可能是代理类
 			Class<?> userType = ClassUtils.getUserClass(handlerType);
 
-			// 获取匹配的方法集合
+			// 获取被RequestMapping标注的方法
 			Map<Method, T> methods = MethodIntrospector.selectMethods(userType,
 					(MethodIntrospector.MetadataLookup<T>) method -> {
 						try {
@@ -629,9 +639,12 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				}
 
 				// 建立名字映射关系
+				// 初始化 nameLookup
 				String name = null;
 				if (getNamingStrategy() != null) {
+					// 获得 Mapping 的名字
 					name = getNamingStrategy().getName(handlerMethod, mapping);
+					// 添加到 mapping 的名字 + HandlerMethod 到 nameLookup 中
 					addMappingName(name, handlerMethod);
 				}
 
@@ -641,6 +654,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 				}
 
 				// 建立mapping 跟 MappingRegistration的关系
+				// 创建 MappingRegistration 对象，并 mapping + MappingRegistration 添加到 registry 中
 				this.registry.put(mapping, new MappingRegistration<>(mapping, handlerMethod, directUrls, name));
 			}
 			finally {
@@ -661,7 +675,9 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		private List<String> getDirectUrls(T mapping) {
 			// 获取写死的url  可以匹配的url就不是直接url
 			List<String> urls = new ArrayList<>(1);
+			// 遍历 Mapping 对应的路径
 			for (String path : getMappingPathPatterns(mapping)) {
+				// 非*模式?路径
 				if (!getPathMatcher().isPattern(path)) {
 					urls.add(path);
 				}

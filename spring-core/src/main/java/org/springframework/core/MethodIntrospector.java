@@ -60,11 +60,17 @@ public final class MethodIntrospector {
 		Set<Class<?>> handlerTypes = new LinkedHashSet<>();
 		Class<?> specificHandlerType = null;
 
+		// 是否被代理过
 		if (!Proxy.isProxyClass(targetType)) {
+			// 获取真实的类型  有可能是代理对象
 			specificHandlerType = ClassUtils.getUserClass(targetType);
+			// 把这个类对象保存
 			handlerTypes.add(specificHandlerType);
 		}
+
+		// 保存这个类所有实现的接口
 		handlerTypes.addAll(ClassUtils.getAllInterfacesForClassAsSet(targetType));
+
 
 		for (Class<?> currentHandlerType : handlerTypes) {
 			final Class<?> targetClass = (specificHandlerType != null ? specificHandlerType : currentHandlerType);

@@ -40,8 +40,14 @@ public class HandlerExecutionChain {
 
 	private static final Log logger = LogFactory.getLog(HandlerExecutionChain.class);
 
+	/**
+	 * 处理器
+	 */
 	private final Object handler;
 
+	/**
+	 * 拦截器数组
+	 */
 	@Nullable
 	private HandlerInterceptor[] interceptors;
 
@@ -66,10 +72,14 @@ public class HandlerExecutionChain {
 	 * (in the given order) before the handler itself executes
 	 */
 	public HandlerExecutionChain(Object handler, @Nullable HandlerInterceptor... interceptors) {
+
+		// 处理一个特殊情况
+		// 如果 handler 本身就是一个 HandlerExecutionChain
 		if (handler instanceof HandlerExecutionChain) {
 			HandlerExecutionChain originalChain = (HandlerExecutionChain) handler;
 			this.handler = originalChain.getHandler();
 			this.interceptorList = new ArrayList<>();
+			// 把原来 HandlerExecutionChain 的 interceptors 跟传过来的 interceptors 合并 然后赋值给自己
 			CollectionUtils.mergeArrayIntoCollection(originalChain.getInterceptors(), this.interceptorList);
 			CollectionUtils.mergeArrayIntoCollection(interceptors, this.interceptorList);
 		}
@@ -88,10 +98,12 @@ public class HandlerExecutionChain {
 	}
 
 	public void addInterceptor(HandlerInterceptor interceptor) {
+		// 添加拦截器
 		initInterceptorList().add(interceptor);
 	}
 
 	public void addInterceptors(HandlerInterceptor... interceptors) {
+		// 批量添加拦截器
 		if (!ObjectUtils.isEmpty(interceptors)) {
 			CollectionUtils.mergeArrayIntoCollection(interceptors, initInterceptorList());
 		}
@@ -129,10 +141,19 @@ public class HandlerExecutionChain {
 	 * that this interceptor has already dealt with the response itself.
 	 */
 	boolean applyPreHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+		// 执行拦截器的前置处理
+
+
+		// 挨个执行拦截器
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
 			for (int i = 0; i < interceptors.length; i++) {
 				HandlerInterceptor interceptor = interceptors[i];
+
+				// 如果拦截器中有返回false的  就立刻触发 AfterCompletion
+				// 并且不继续执行后面拦截器的 前置处理
+				// 只调用已经执行了前置处理的拦截器的AfterCompletion方法
 				if (!interceptor.preHandle(request, response, this.handler)) {
 					triggerAfterCompletion(request, response, null);
 					return false;
@@ -148,7 +169,7 @@ public class HandlerExecutionChain {
 	 */
 	void applyPostHandle(HttpServletRequest request, HttpServletResponse response, @Nullable ModelAndView mv)
 			throws Exception {
-
+		// 挨个执行后置处理
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
 			for (int i = interceptors.length - 1; i >= 0; i--) {
@@ -165,7 +186,8 @@ public class HandlerExecutionChain {
 	 */
 	void triggerAfterCompletion(HttpServletRequest request, HttpServletResponse response, @Nullable Exception ex)
 			throws Exception {
-
+		// 只调用已经执行了前置处理的拦截器的AfterCompletion方法
+		// 并且是倒叙的
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
 			for (int i = this.interceptorIndex; i >= 0; i--) {

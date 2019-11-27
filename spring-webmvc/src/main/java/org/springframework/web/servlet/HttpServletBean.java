@@ -77,6 +77,11 @@ import org.springframework.web.context.support.StandardServletEnvironment;
  * @see #initServletBean
  * @see #doGet
  * @see #doPost
+ *
+ *
+ *
+ *
+ * 负责将 ServletConfig 设置到当前 Servlet 对象中
  */
 @SuppressWarnings("serial")
 public abstract class HttpServletBean extends HttpServlet implements EnvironmentCapable, EnvironmentAware {
@@ -86,7 +91,11 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 
 	@Nullable
 	private ConfigurableEnvironment environment;
-
+	/**
+	 * 必须配置的属性的集合
+	 *
+	 * 在 {@link ServletConfigPropertyValues} 中，会校验是否有对应的属性
+	 */
 	private final Set<String> requiredProperties = new HashSet<>(4);
 
 
@@ -104,6 +113,8 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 	}
 
 	/**
+	 *
+	 * 实现自 EnvironmentAware 接口，自动注入
 	 * Set the {@code Environment} that this servlet runs in.
 	 * <p>Any environment set here overrides the {@link StandardServletEnvironment}
 	 * provided by default.
@@ -113,6 +124,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 	@Override
 	public void setEnvironment(Environment environment) {
 		Assert.isInstanceOf(ConfigurableEnvironment.class, environment, "ConfigurableEnvironment required");
+		// 如果 environment 为空，主动创建
 		this.environment = (ConfigurableEnvironment) environment;
 	}
 
@@ -149,6 +161,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 
 		// Set bean properties from init parameters.
 		// 获取 ServletConfig 中的配置信息
+		// 解析 <init-param /> 标签，封装到 PropertyValues pvs 中
 		PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
 		if (!pvs.isEmpty()) {
 			try {
@@ -159,6 +172,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 				BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(this);
 				ResourceLoader resourceLoader = new ServletContextResourceLoader(getServletContext());
 				bw.registerCustomEditor(Resource.class, new ResourceEditor(resourceLoader, getEnvironment()));
+				// 初始化 BeanWrapper
 				initBeanWrapper(bw);
 				// 设置配置信息到目标对象中
 				bw.setPropertyValues(pvs, true);

@@ -337,7 +337,10 @@ public abstract class BeanFactoryUtils {
 
 		Assert.notNull(lbf, "ListableBeanFactory must not be null");
 		Map<String, T> result = new LinkedHashMap<>(4);
+		// 从spring中获取所有该类型的bean
 		result.putAll(lbf.getBeansOfType(type, includeNonSingletons, allowEagerInit));
+
+		// 如果有父容器有该类型的bean 也取出来
 		if (lbf instanceof HierarchicalBeanFactory) {
 			HierarchicalBeanFactory hbf = (HierarchicalBeanFactory) lbf;
 			if (hbf.getParentBeanFactory() instanceof ListableBeanFactory) {

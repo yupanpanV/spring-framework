@@ -137,6 +137,10 @@ import org.springframework.web.util.WebUtils;
  * @see #setContextConfigLocation
  * @see #setContextInitializerClasses
  * @see #setNamespace
+ *
+ *
+ *
+ * 负责初始化 Spring Servlet WebApplicationContext 容器
  */
 @SuppressWarnings("serial")
 public abstract class FrameworkServlet extends HttpServletBean implements ApplicationContextAware {
@@ -171,7 +175,11 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	@Nullable
 	private String contextAttribute;
 
-	/** WebApplicationContext implementation class to create. */
+	/**
+	 * WebApplicationContext implementation class to create.
+	 *
+	 * 创建的 WebApplicationContext 类型
+	 */
 	private Class<?> contextClass = DEFAULT_CONTEXT_CLASS;
 
 	/** WebApplicationContext id to assign. */
@@ -182,7 +190,11 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	@Nullable
 	private String namespace;
 
-	/** Explicit context config location. */
+	/**
+	 * Explicit context config location.
+	 *
+	 * 配置文件的地址
+	 */
 	@Nullable
 	private String contextConfigLocation;
 
@@ -194,7 +206,11 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	@Nullable
 	private String contextInitializerClasses;
 
-	/** Should we publish the context as a ServletContext attribute?. */
+	/**
+	 * Should we publish the context as a ServletContext attribute?.
+	 *
+	 * 是否将 {@link #webApplicationContext} 设置到 {@link ServletContext} 的属性种
+	 */
 	private boolean publishContext = true;
 
 	/** Should we publish a ServletRequestHandledEvent at the end of each request?. */
@@ -219,7 +235,11 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	/** If the WebApplicationContext was injected via {@link #setApplicationContext}. */
 	private boolean webApplicationContextInjected = false;
 
-	/** Flag used to detect whether onRefresh has already been called. */
+	/**
+	 * Flag used to detect whether onRefresh has already been called.
+	 *
+	 * 标记是否接收到 ContextRefreshedEvent 事件。即 {@link #onApplicationEvent(ContextRefreshedEvent)}
+	 */
 	private volatile boolean refreshEventReceived = false;
 
 	/** Monitor for synchronized onRefresh execution. */
@@ -528,6 +548,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		try {
 			// 初始化SpringMVC容器
 			this.webApplicationContext = initWebApplicationContext();
+			// 空实现。子类有需要，可以实现该方法，实现自定义逻辑
 			initFrameworkServlet();
 		}
 		catch (ServletException | RuntimeException ex) {
@@ -611,7 +632,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			wac = createWebApplicationContext(rootContext);
 		}
 
-		// 如果没有收到刷新事件  就刷新一下SpringMVC容器
+		// 如果未触发刷新事件，则主动触发刷新
 		if (!this.refreshEventReceived) {
 			// Either the context is not a ConfigurableApplicationContext with refresh
 			// support or the context injected at construction time had already been
@@ -913,7 +934,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			throws ServletException, IOException {
 
 
-
+		// 获得请求方法
 		HttpMethod httpMethod = HttpMethod.resolve(request.getMethod());
 		if (httpMethod == HttpMethod.PATCH || httpMethod == null) {
 			// 本类只处理PATCH请求 或者没有类型请求

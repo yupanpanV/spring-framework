@@ -41,17 +41,34 @@ import org.springframework.web.servlet.ModelAndView;
  * @author Rossen Stoyanchev
  * @author Brian Clozel
  * @since 3.0
+ *
+ * 支持地址匹配的 HandlerInterceptor 实现类
+ * 就是我们常用的拦截器
+ *
+ * 实际上本拦截器就是其他拦截器的代理
  */
 public final class MappedInterceptor implements HandlerInterceptor {
 
+	/**
+	 * 匹配的路径
+	 */
 	@Nullable
 	private final String[] includePatterns;
 
+	/**
+	 * 排除的路径
+	 */
 	@Nullable
 	private final String[] excludePatterns;
 
+	/**
+	 * 被代理的拦截器对象
+	 */
 	private final HandlerInterceptor interceptor;
 
+	/**
+	 * 路径匹配器
+	 */
 	@Nullable
 	private PathMatcher pathMatcher;
 
@@ -144,7 +161,12 @@ public final class MappedInterceptor implements HandlerInterceptor {
 	 * @return {@code true} if the interceptor applies to the given request path
 	 */
 	public boolean matches(String lookupPath, PathMatcher pathMatcher) {
+		// 判断指定的path 与拦截器是否匹配
+		// 也就是说是否要拦截这个path
+
 		PathMatcher pathMatcherToUse = (this.pathMatcher != null ? this.pathMatcher : pathMatcher);
+
+		// 尝试排除这个path
 		if (!ObjectUtils.isEmpty(this.excludePatterns)) {
 			for (String pattern : this.excludePatterns) {
 				if (pathMatcherToUse.match(pattern, lookupPath)) {
@@ -152,9 +174,13 @@ public final class MappedInterceptor implements HandlerInterceptor {
 				}
 			}
 		}
+
+		// 如果本拦截器的Patterns 为空 直接断定为要拦截
 		if (ObjectUtils.isEmpty(this.includePatterns)) {
 			return true;
 		}
+
+		// 从拦截器中判断是否需要拦截
 		for (String pattern : this.includePatterns) {
 			if (pathMatcherToUse.match(pattern, lookupPath)) {
 				return true;

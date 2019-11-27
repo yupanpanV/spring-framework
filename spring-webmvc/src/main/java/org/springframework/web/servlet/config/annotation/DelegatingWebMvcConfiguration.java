@@ -45,6 +45,11 @@ public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport {
 	private final WebMvcConfigurerComposite configurers = new WebMvcConfigurerComposite();
 
 
+	/**
+	 *  这里会注入WebMvcConfigurer
+	 *  也就是说 我们自己配置的 WebMvcConfigurerAdapter 或者 WebMvcConfigurer  会被注入到这里
+	 *  从而调用 WebMvcConfigurer#addInterceptors方法 添加拦截器
+	 */
 	@Autowired(required = false)
 	public void setConfigurers(List<WebMvcConfigurer> configurers) {
 		if (!CollectionUtils.isEmpty(configurers)) {
